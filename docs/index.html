@@ -2,6 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
+<meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ретро открытий пиццерий · Додо Пицца</title>
 <style>:root {
@@ -236,7 +237,6 @@ dd {margin:1px 0 0;white-space:pre-line}
 
 .sync-tools {display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-bottom:15px;color:var(--muted);font-size:13px}
 [hidden] {display:none !important}
-#sheet-link {text-decoration:none}
 </style>
 </head>
 <body>
@@ -261,7 +261,12 @@ dd {margin:1px 0 0;white-space:pre-line}
     <div><h1 id="page-title">Ретро открытий пиццерий</h1><p>Выручка новых пиццерий и причины отклонений от цели.</p></div>
     <div class="month-control" id="month-control" hidden><span id="month-label">Месяц работы</span><div id="months" class="segment" role="group" aria-labelledby="month-label"></div></div>
   </section>
-  <div class="sync-tools"><span id="sync-status" role="status">Для доступа к отчёту откройте исходную таблицу и выберите «Ретро → Открыть лендинг».</span><a id="sheet-link" class="secondary-button" href="https://docs.google.com/spreadsheets/d/1XT382mmH0xkTwaAqO0on7GSnPfrHFnE443TFUKiCGLY/edit" target="_blank" rel="noopener noreferrer">Открыть таблицу</a><button hidden id="refresh-data" class="secondary-button">Обновить данные</button></div>
+  <div class="sync-tools">
+    <span id="sync-status" role="status">Войдите в аккаунт Google, у которого есть доступ к таблице «Ретро. Открытия».</span>
+    <button hidden id="google-login" class="secondary-button">Войти через Google</button>
+    <button hidden id="refresh-data" class="secondary-button">Обновить данные</button>
+    <button hidden id="sign-out" class="text-button">Выйти из отчёта</button>
+  </div>
   <div id="live-data" hidden>
   <section class="metrics" aria-label="Показатели по текущей выборке">
     <article class="metric"><div class="metric-label"><svg class="icon"><use href="#i-store"/></svg>Пиццерий в выборке</div><div class="metric-value" id="metric-count">—</div><div class="metric-note" id="count-note"></div></article>
@@ -650,9 +655,17 @@ function decodeSummary(values) {
 }
 const syncButton = $('refresh-data');
 const syncStatus = $('sync-status');
+const loginButton = $('google-login');
+const spreadsheetId = '1XT382mmH0xkTwaAqO0on7GSnPfrHFnE443TFUKiCGLY';
+const clientId = '';
+const fileScope = 'https://www.googleapis.com/auth/drive.file';
+const callbackUrl = new URL('./', location.href).href;
+const stateKey = 'pizzeria-openings-retro:oauth-state';
+const embedded = window.parent !== window && location.hash === '#sheet';
+let accessToken = '';
 let lastRead = '';
 
-function readSheet() {
+function readFromDialog() {
   return new Promise((resolve, reject) => {
     const channel = new MessageChannel();
     const timer = setTimeout(() => {
@@ -670,12 +683,86 @@ function readSheet() {
   });
 }
 
+function startLogin() {
+  const state = crypto.randomUUID();
+  sessionStorage.setItem(stateKey, JSON.stringify({state, started: Date.now()}));
+  const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+  url.search = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: callbackUrl,
+    response_type: 'token',
+    scope: fileScope,
+    include_granted_scopes: 'false',
+    prompt: 'consent',
+    trigger_onepick: 'true',
+    file_ids: spreadsheetId,
+    state
+  });
+  location.assign(url.href);
+}
+
+function acceptLogin() {
+  const fragment = new URLSearchParams(location.hash.slice(1));
+  const query = new URLSearchParams(location.search);
+  if (!fragment.has('access_token') && !fragment.has('error') && !query.has('error') && !query.has('code')) return;
+  history.replaceState(null, '', callbackUrl);
+  const pending = JSON.parse(sessionStorage.getItem(stateKey) || 'null');
+  sessionStorage.removeItem(stateKey);
+  const returnedState = fragment.get('state') || query.get('state');
+  if (!pending || returnedState !== pending.state || Date.now() - pending.started > 15 * 60000) {
+    throw new Error('Сеанс входа завершён. Войдите через Google ещё раз.');
+  }
+  if (fragment.has('error') || query.has('error')) throw new Error('Google не предоставил доступ к отчёту.');
+  const selected = fragment.get('picked_file_ids') ?? query.get('picked_file_ids');
+  if (selected !== null && selected !== spreadsheetId) throw new Error('Для отчёта выберите таблицу «Ретро. Открытия».');
+  if (!fragment.get('access_token') || fragment.get('scope') !== fileScope) {
+    throw new Error('Google не вернул доступ к выбранной таблице. Повторите вход.');
+  }
+  accessToken = fragment.get('access_token');
+}
+
+async function readFromGoogle() {
+  const range = encodeURIComponent("'Сводная'!A:AN");
+  const url = new URL('https://sheets.googleapis.com/v4/spreadsheets/' + spreadsheetId + '/values/' + range);
+  url.search = new URLSearchParams({valueRenderOption: 'UNFORMATTED_VALUE', dateTimeRenderOption: 'FORMATTED_STRING'});
+  const response = await fetch(url, {
+    headers: {Authorization: 'Bearer ' + accessToken},
+    cache: 'no-store', credentials: 'omit', redirect: 'error', signal: AbortSignal.timeout(60000)
+  });
+  if ([401, 403, 404].includes(response.status)) {
+    accessToken = '';
+    if (response.status === 401) throw new Error('Сеанс Google завершён. Войдите снова.');
+    throw new Error('Google не разрешил чтение «Сводной». Проверьте доступ выбранного аккаунта к исходной таблице.');
+  }
+  if (!response.ok) throw new Error('Не удалось прочитать «Сводную» (Google ' + response.status + ').');
+  const result = await response.json();
+  return {values: result.values, readAt: Date.now()};
+}
+
+function showLogin() {
+  accessToken = '';
+  lastRead = '';
+  if ($('detail').open) $('detail').close();
+  $('detail-content').replaceChildren();
+  $('detail-name').textContent = '';
+  rows = [];
+  rowIndex.clear();
+  for (const key of Object.keys(filterGroups)) $(key + '-options').innerHTML = groupItems(key);
+  $('partner-search').value = '';
+  resetFilters();
+  $('live-data').hidden = true;
+  $('month-control').hidden = true;
+  syncButton.hidden = true;
+  $('sign-out').hidden = true;
+  loginButton.hidden = false;
+}
+
 async function refreshData() {
   if (syncButton.disabled) return;
   syncButton.disabled = true;
   syncStatus.textContent = 'Читаем вкладку «Сводная»…';
   try {
-    const result = await readSheet();
+    const result = embedded ? await readFromDialog() : await readFromGoogle();
     const nextRows = decodeSummary(result.values);
     const time = new Date(result.readAt).toLocaleString('ru-RU');
     closeGroup();
@@ -692,17 +779,40 @@ async function refreshData() {
     lastRead = time;
     syncStatus.textContent = 'Обновлено ' + time;
   } catch (error) {
+    if (!embedded && !accessToken) showLogin();
     syncStatus.textContent = error.message + (lastRead ? ' На экране данные на ' + lastRead + '.' : '');
   } finally {
     syncButton.disabled = false;
   }
 }
 
-if (window.parent !== window && window.location.hash === '#sheet') {
-  $('sheet-link').hidden = true;
+syncButton.addEventListener('click', refreshData);
+if (embedded) {
   syncButton.hidden = false;
-  syncButton.addEventListener('click', refreshData);
   refreshData();
+} else if (window === window.top) {
+  loginButton.hidden = false;
+  loginButton.disabled = !clientId;
+  if (!clientId) syncStatus.textContent = 'Вход через Google ожидает настройки владельцем отчёта.';
+  loginButton.addEventListener('click', () => {
+    try { startLogin(); }
+    catch { syncStatus.textContent = 'Для входа разрешите хранение данных сайта в этой вкладке.'; }
+  });
+  $('sign-out').addEventListener('click', () => location.replace(callbackUrl));
+  window.addEventListener('pageshow', event => {
+    if (event.persisted) location.reload();
+  });
+  try {
+    acceptLogin();
+    if (clientId && accessToken) {
+      loginButton.hidden = true;
+      syncButton.hidden = false;
+      $('sign-out').hidden = false;
+      refreshData();
+    }
+  } catch (error) {
+    syncStatus.textContent = error.message;
+  }
 }
 </script>
 </body></html>
