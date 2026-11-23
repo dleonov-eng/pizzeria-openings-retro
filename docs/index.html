@@ -53,7 +53,10 @@ h1,h2,h3,p {margin:0}
 h1,h2,.metric-value {font-family:var(--serif);font-weight:400}
 h1 {font-size:clamp(32px,3.8vw,55px);line-height:1.08;letter-spacing:-.045em}
 .hero p {margin:9px 0 0;color:var(--muted);font-size:14px}
-.month-control {display:grid;gap:5px;flex:none}
+.month-control {
+  position:sticky;top:0;z-index:8;display:flex;align-items:center;justify-content:flex-end;
+  gap:9px;padding-block:6px;margin-bottom:12px;background:var(--paper);border-bottom:1px solid var(--border)
+}
 .month-control>span,.field,.sort-control>span:first-child {color:var(--muted);font-size:12px;font-weight:550}
 .segment {display:inline-flex;padding:3px;gap:2px;background:var(--panel);border:1px solid var(--border);border-radius:8px}
 .segment button {padding:6px 13px;border-radius:5px;font-size:13px;font-weight:550;white-space:nowrap}
@@ -202,7 +205,7 @@ dd {margin:1px 0 0;white-space:pre-line}
 }
 @media(max-width:750px) {
   .hero {align-items:flex-start;flex-wrap:wrap;padding:22px 0 16px;gap:14px}
-  .month-control {display:flex;align-items:center;gap:9px}
+  .month-control {justify-content:flex-start;flex-wrap:wrap}
   .filters {grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   .field {font-size:12px}
   #reasons-field {grid-column:1/-1}
@@ -276,8 +279,8 @@ dd {margin:1px 0 0;white-space:pre-line}
 <main class="wrap">
   <section class="hero" aria-labelledby="page-title">
     <div><h1 id="page-title">Ретро открытий пиццерий</h1><p>Выручка новых пиццерий и причины отклонений от цели.</p></div>
-    <div class="month-control" id="month-control" hidden><span id="month-label">Месяц работы</span><div id="months" class="segment" role="group" aria-labelledby="month-label"></div></div>
   </section>
+  <div class="month-control" id="month-control" hidden><span id="month-label">Месяц работы</span><div id="months" class="segment" role="group" aria-labelledby="month-label"></div></div>
   <div class="sync-tools">
     <span id="sync-status" role="status">Войдите в аккаунт Google, у которого есть доступ к таблице «Ретро. Открытия».</span>
     <button hidden id="google-login" class="secondary-button">Войти через Google</button>
