@@ -695,6 +695,31 @@ const stateKey = 'pizzeria-openings-retro:oauth-state';
 const embedded = window.parent !== window && location.hash === '#sheet';
 let accessToken = '';
 let lastRead = '';
+let nextReadAt = 0;
+let readTimer;
+let returnView = null;
+
+function scheduleNextRead() {
+  const now = Date.now();
+  const next = new Date(now);
+  // 09:00 and 21:00 Moscow time are 06:00 and 18:00 UTC.
+  next.setUTCHours(6, 0, 0, 0);
+  while (next.getTime() <= now) next.setUTCHours(next.getUTCHours() + 12);
+  nextReadAt = next.getTime();
+  readTimer = setTimeout(readIfDue, nextReadAt - now);
+}
+
+function readIfDue() {
+  if (!nextReadAt || !navigator.onLine) return;
+  clearTimeout(readTimer);
+  if (Date.now() >= nextReadAt) refreshData(true);
+  else readTimer = setTimeout(readIfDue, nextReadAt - Date.now());
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) readIfDue();
+});
+window.addEventListener('online', readIfDue);
 
 function readFromDialog() {
   return new Promise((resolve, reject) => {
@@ -714,9 +739,11 @@ function readFromDialog() {
   });
 }
 
-function startLogin() {
-  const state = crypto.randomUUID();
-  sessionStorage.setItem(stateKey, JSON.stringify({state, started: Date.now()}));
+function startLogin(renew = false) {
+  const nonce = crypto.randomUUID();
+  const view = renew ? {...state} : returnView;
+  const pending = {state: nonce, started: Date.now(), view};
+  sessionStorage.setItem(stateKey, JSON.stringify(pending, (_, v) => v instanceof Set ? Array.from(v) : v));
   const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
   url.search = new URLSearchParams({
     client_id: clientId,
@@ -724,11 +751,13 @@ function startLogin() {
     response_type: 'token',
     scope: fileScope,
     include_granted_scopes: 'false',
-    prompt: 'consent',
-    trigger_onepick: 'true',
-    file_ids: spreadsheetId,
-    state
+    prompt: renew ? 'none' : 'consent',
+    state: nonce
   });
+  if (!renew) {
+    url.searchParams.set('trigger_onepick', 'true');
+    url.searchParams.set('file_ids', spreadsheetId);
+  }
   location.assign(url.href);
 }
 
@@ -743,7 +772,10 @@ function acceptLogin() {
   if (!pending || returnedState !== pending.state || Date.now() - pending.started > 15 * 60000) {
     throw new Error('Сеанс входа завершён. Войдите через Google ещё раз.');
   }
-  if (fragment.has('error') || query.has('error')) throw new Error('Google не предоставил доступ к отчёту.');
+  returnView = pending.view || null;
+  if (fragment.has('error') || query.has('error')) {
+    throw new Error(returnView ? 'Для обновления отчёта войдите через Google снова.' : 'Google не предоставил доступ к отчёту.');
+  }
   const selected = fragment.get('picked_file_ids') ?? query.get('picked_file_ids');
   if (selected !== null && selected !== spreadsheetId) throw new Error('Для отчёта выберите таблицу «Ретро. Открытия».');
   if (!fragment.get('access_token') || fragment.get('scope') !== fileScope) {
@@ -762,7 +794,7 @@ async function readFromGoogle() {
   });
   if ([401, 403, 404].includes(response.status)) {
     accessToken = '';
-    if (response.status === 401) throw new Error('Сеанс Google завершён. Войдите снова.');
+    if (response.status === 401) throw Object.assign(new Error('Сеанс Google завершён. Войдите снова.'), {status: 401});
     throw new Error('Google не разрешил чтение «Сводной». Проверьте доступ выбранного аккаунта к исходной таблице.');
   }
   if (!response.ok) throw new Error('Не удалось прочитать «Сводную» (Google ' + response.status + ').');
@@ -778,7 +810,10 @@ function showLogin() {
   $('detail-name').textContent = '';
   rows = [];
   rowIndex.clear();
-  for (const key of Object.keys(filterGroups)) $(key + '-options').innerHTML = groupItems(key);
+  for (const key of Object.keys(filterGroups)) {
+    state[key].clear();
+    $(key + '-options').innerHTML = groupItems(key);
+  }
   $('partner-search').value = '';
   resetFilters();
   $('live-data').hidden = true;
@@ -788,8 +823,24 @@ function showLogin() {
   loginButton.hidden = false;
 }
 
-async function refreshData() {
+function restoreView(view) {
+  for (const key of Object.keys(filterGroups)) {
+    if (Array.isArray(view[key])) state[key] = new Set(view[key].filter(v => typeof v === 'string'));
+  }
+  for (const key of ['sort','search','target']) {
+    if (typeof view[key] === 'string') {
+      $(key).value = view[key];
+      if ($(key).value === view[key]) state[key] = view[key];
+    }
+  }
+  if (Object.hasOwn(periods, view.month)) state.month = Number(view.month);
+  state.full = view.full === true;
+}
+
+async function refreshData(automatic = false) {
   if (syncButton.disabled) return;
+  clearTimeout(readTimer);
+  nextReadAt = 0;
   syncButton.disabled = true;
   syncStatus.textContent = 'Читаем вкладку «Сводная»…';
   try {
@@ -800,6 +851,10 @@ async function refreshData() {
     if ($('detail').open) $('detail').close();
     rows = nextRows;
     rowIndex = new Map(rows.map((row, i) => [row, i]));
+    if (returnView) {
+      restoreView(returnView);
+      returnView = null;
+    }
     for (const key of Object.keys(filterGroups)) {
       $(key + '-options').innerHTML = groupItems(key);
     }
@@ -808,16 +863,23 @@ async function refreshData() {
     $('live-data').hidden = false;
     $('month-control').hidden = false;
     lastRead = time;
-    syncStatus.textContent = 'Обновлено ' + time;
+    syncStatus.textContent = 'Обновлено ' + time + ' · Автообновление в 09:00 и 21:00 МСК';
   } catch (error) {
-    if (!embedded && !accessToken) showLogin();
+    if (!embedded && !accessToken) {
+      if (automatic && lastRead && error.status === 401) {
+        try { startLogin(true); }
+        catch { /* Show the sign-in screen if the renewal could not be started. */ }
+      }
+      showLogin();
+    }
     syncStatus.textContent = error.message + (lastRead ? ' На экране данные на ' + lastRead + '.' : '');
   } finally {
     syncButton.disabled = false;
+    if (embedded || accessToken) scheduleNextRead();
   }
 }
 
-syncButton.addEventListener('click', refreshData);
+syncButton.addEventListener('click', () => refreshData());
 if (embedded) {
   syncButton.hidden = false;
   refreshData();
