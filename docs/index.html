@@ -1,0 +1,708 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ретро открытий пиццерий · Додо Пицца</title>
+<style>:root {
+  color-scheme: light dark;
+  --paper: #fbfaf7; --surface: #fff; --panel: #f5f3ee; --ink: #272720; --muted: #65665e;
+  --border: #dedfd6; --rule: #e9e9e1; --accent: #aa4213; --accent-bg: #fff0e2; --accent-line: #f0d5bf;
+  --good: #316749; --good-bg: #eaf4eb; --bad: #95462b; --bad-bg: #f9ede6;
+  --selected: #31342b; --on-selected: #fff; --shadow: 0 8px 36px rgb(32 34 25 / 12%);
+  --serif: Georgia, "Times New Roman", serif;
+}
+@media (prefers-color-scheme:dark) {
+  :root {
+    --paper:#1b1c19; --surface:#23241f; --panel:#2b2d27; --ink:#f2f1e9; --muted:#b0b2a8;
+    --border:#44473d; --rule:#363930; --accent:#ffac79; --accent-bg:#382a20; --accent-line:#634634;
+    --good:#acdab8; --good-bg:#2a3e30; --bad:#edb398; --bad-bg:#443027;
+    --selected:#dadcd0; --on-selected:#24261e; --shadow:0 8px 36px rgb(0 0 0 / 35%);
+  }
+}
+* {box-sizing:border-box}
+body {margin:0;background:var(--paper);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-variant-numeric:tabular-nums}
+button,input,select {font:inherit;color:inherit}
+button,select {cursor:pointer}
+button {background:none;border:0}
+button:disabled {cursor:default;opacity:.5}
+:focus-visible {outline:2px solid var(--accent);outline-offset:2px}
+[hidden],.symbols {display:none!important}
+h1,h2,h3,p {margin:0}
+.icon {width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.wrap {width:min(1392px,100%);margin-inline:auto;padding-inline:clamp(16px,4vw,60px)}
+.masthead {border-bottom:1px solid var(--border);background:var(--surface)}
+.mast-inner,.identity,.date-range,.table-title,.text-button,.metric-label,.filter-heading h2,.sort-control,.searchbox,.target-line {display:flex;align-items:center}
+.mast-inner {min-height:59px;justify-content:space-between;gap:14px}
+.identity {gap:11px;font-size:13px}
+.identity strong {font-size:16px;letter-spacing:-.5px}
+.identity-divider {height:16px;width:1px;background:var(--border);margin:0 2px}
+.identity-section,.date-range {color:var(--muted)}
+.brand-mark {display:grid;place-items:center;width:28px;height:28px;background:#fa8943;color:#33281c;border-radius:7px}
+.brand-mark svg {width:16px;height:16px}
+.date-range {gap:8px;font-size:12px;font-weight:550}
+.hero {display:flex;align-items:center;justify-content:space-between;gap:20px;padding:32px 0 24px}
+h1,h2,.metric-value {font-family:var(--serif);font-weight:400}
+h1 {font-size:clamp(32px,3.8vw,55px);line-height:1.08;letter-spacing:-.045em}
+.hero p {margin:9px 0 0;color:var(--muted);font-size:14px}
+.month-control {display:grid;gap:5px;flex:none}
+.month-control>span,.field,.sort-control>span:first-child {color:var(--muted);font-size:12px;font-weight:550}
+.segment {display:inline-flex;padding:3px;gap:2px;background:var(--panel);border:1px solid var(--border);border-radius:8px}
+.segment button {padding:6px 13px;border-radius:5px;font-size:13px;font-weight:550;white-space:nowrap}
+.segment button[aria-pressed=true] {background:var(--selected);color:var(--on-selected)}
+.segment button:hover:not([aria-pressed=true]) {background:var(--surface)}
+.metrics {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.metric {padding:17px 20px 16px;border:1px solid var(--border);background:var(--surface);border-radius:11px;display:grid;align-content:space-between;gap:5px}
+.metric-label {gap:8px;font-weight:550;font-size:13px}
+.metric-label svg {color:var(--muted)}
+.metric-value {font-size:clamp(33px,2.8vw,43px);line-height:1.14;letter-spacing:-.04em}
+.metric-value small {font:500 14px/1.1 system-ui,sans-serif;color:var(--muted);letter-spacing:0}
+.metric-note {font-size:12px;color:var(--muted)}
+.revenue-metric {background:var(--accent-bg);border-color:var(--accent-line)}
+.revenue-metric .metric-label svg,.revenue-metric .metric-value {color:var(--accent)}
+.target-line {gap:14px;justify-content:space-between}
+.target-bar {width:min(22%,75px);height:5px;border-radius:3px;background:var(--rule);overflow:hidden}
+.target-bar i {display:block;height:100%;background:var(--good)}
+.filter-panel {padding:15px 18px 18px;border:1px solid var(--border);border-radius:11px;background:var(--surface)}
+.filter-heading,.table-title-row,.table-actions,.dialog-top {display:flex;align-items:center;justify-content:space-between;gap:14px}
+.filter-heading {margin-bottom:12px}
+.filter-heading h2 {gap:7px;font:650 14px/1.3 system-ui,sans-serif}
+.text-button {gap:5px;font-size:12px;font-weight:550;color:var(--muted);padding:3px 1px}
+.text-button:hover:not(:disabled) {color:var(--accent)}
+.text-button .icon {width:14px;height:14px}
+.filters {display:grid;grid-template-columns:1.11fr 1fr 1fr 1.14fr 1fr;gap:12px}
+.field {display:flex;flex-direction:column;justify-content:flex-end;gap:5px;min-width:0}
+.select-wrap {position:relative;display:block;min-width:0}
+.select-wrap:after {content:"";position:absolute;right:14px;top:calc(50% - 5px);width:7px;height:7px;border:solid var(--muted);border-width:0 1.5px 1.5px 0;transform:rotate(45deg);pointer-events:none}
+select,.multi-trigger,.searchbox {width:100%;height:38px;border:1px solid var(--border);background:var(--surface);border-radius:7px;color:var(--ink);font-weight:450;font-size:13px}
+select {appearance:none;padding:0 31px 0 11px;text-overflow:ellipsis}
+select:hover,.multi-trigger:hover,.searchbox:focus-within {border-color:var(--muted)}
+.multi-trigger {display:flex;align-items:center;justify-content:space-between;gap:4px;text-align:left;padding:0 9px 0 11px}
+.multi-trigger span {overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.multi-trigger .icon {color:var(--muted)}
+.multi-field {position:relative}
+.popover {position:absolute;z-index:7;left:0;top:calc(100% + 6px);width:min(315px,calc(100vw - 54px));display:flex;flex-direction:column;max-height:55vh;background:var(--surface);border:1px solid var(--border);padding:10px;border-radius:9px;box-shadow:var(--shadow)}
+#reasons-field .popover {left:auto;right:0}
+.options-list {min-height:0;overflow-y:auto;overscroll-behavior:contain}
+.option-search {flex:none;width:100%;border:1px solid var(--border);border-radius:5px;background:var(--surface);padding:6px 8px;margin-bottom:5px;font-size:13px}
+.popover p {font-size:12px;margin:2px 5px 8px}
+.popover label {display:flex;align-items:center;gap:9px;padding:6px;border-radius:5px;font-size:13px;font-weight:450;color:var(--ink);cursor:pointer}
+.popover label:hover {background:var(--panel)}
+.popover input[type="checkbox"] {margin:0;width:16px;height:16px;flex-shrink:0;accent-color:var(--accent)}
+.popover .text-button {margin:6px 5px 0}
+#active-filters {display:flex;gap:6px;flex-wrap:wrap;padding-top:12px}
+.active-chip {display:inline-flex;align-items:center;gap:5px;color:var(--accent);background:var(--accent-bg);border-radius:5px;font-size:12px;padding:3px 7px}
+.active-chip .icon {width:12px;height:12px}
+.results {margin-top:25px}
+.table-title {gap:11px;flex-wrap:wrap}
+.table-title h2 {font-size:clamp(25px,2.3vw,32px);letter-spacing:-.035em;line-height:1.12}
+.result-count {padding:2px 8px;font-size:12px;font-weight:600;color:var(--muted);border-radius:14px;background:var(--panel);border:1px solid var(--border)}
+.view-control button {padding:5px 11px}
+.table-actions {margin:13px 0 10px}
+.searchbox {width:min(260px,45%);gap:8px;padding:0 11px}
+.searchbox .icon {width:15px;color:var(--muted)}
+.searchbox input {width:100%;height:100%;min-width:0;background:transparent;border:none;outline:none;font-size:13px}
+.searchbox:focus-within {outline:2px solid var(--accent);outline-offset:1px}
+.sort-control {gap:9px}
+.sort-control select {height:36px}
+.table-frame {max-height:clamp(350px,61vh,760px);overflow:auto;border:1px solid var(--border);border-radius:9px;background:var(--surface);scrollbar-color:var(--border) transparent}
+table {border-spacing:0}
+#pizzerias {width:100%;text-align:left}
+th,td {vertical-align:middle;border-bottom:1px solid var(--rule);padding:10px 14px}
+thead th {position:sticky;top:0;z-index:2;background:var(--panel);color:var(--muted);font-size:12px;font-weight:550;line-height:1.3;border-bottom:1px solid var(--border)}
+#pizzerias thead tr:first-child th:first-child {z-index:4}
+#pizzerias thead tr:first-child th:first-child,#pizzerias tbody td:first-child {position:sticky;left:0}
+#pizzerias tbody td:first-child {z-index:1;background:var(--surface)}
+#pizzerias tbody tr:hover td {background:var(--panel)}
+tbody tr:last-child td {border-bottom:0}
+.compact {min-width:1070px;table-layout:fixed}
+.compact thead {position:sticky;top:0;z-index:3}
+.compact thead th {position:static}
+.compact .col-name {width:18%}
+.compact .rev-band {width:36%;text-align:center;padding-block:6px}
+.compact thead tr:nth-child(2) th {padding-block:6px}
+.compact .col-target {width:13%}
+.compact .col-partner {width:17%}
+.compact .col-reasons {width:16%}
+.name-button {padding:0;display:inline-flex;align-items:baseline;gap:4px;text-align:left;font-size:14px;font-weight:650;line-height:1.3}
+.name-button:hover {color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.name-button .icon {width:12px;height:12px;align-self:center;color:var(--muted)}
+.sub {display:block;font-size:11px;color:var(--muted);margin-top:3px}
+.right,.money {text-align:right}
+.money {white-space:nowrap;font-weight:600}
+.money .plan {font-weight:400;margin-top:4px}
+.bar-head {display:inline-flex;align-items:center;justify-content:inherit;gap:5px;color:inherit;font:inherit;padding:0;text-align:inherit}
+.sort-mark {font-family:system-ui,sans-serif;font-size:13px;color:var(--accent)}
+.money-track {width:70px;height:3px;margin:5px 0 0 auto;background:var(--rule);border-radius:2px;overflow:hidden}
+.money-track i {display:block;background:#d98e5e;height:100%}
+.status {display:inline-flex;align-items:center;gap:6px;white-space:nowrap;border-radius:20px;padding:3px 9px;font-size:12px;font-weight:550;background:var(--panel);color:var(--muted)}
+.status:before {content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
+.status.yes {color:var(--good);background:var(--good-bg)}
+.status.no {color:var(--bad);background:var(--bad-bg)}
+.compact td {font-size:13px}
+.compact .partner-cell {font-size:12px}
+.reason-cell {position:relative;color:var(--muted);cursor:pointer}
+.reason-button {display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;padding:0;text-align:left;white-space:inherit}
+.reason-button::after {content:"";position:absolute;inset:0}
+.reason-button .icon {width:13px;height:13px}
+.reason-cell:hover,.reason-cell:focus-within {color:var(--accent)}
+.reason-button:focus-visible {outline:none}
+.reason-button:focus-visible::after {outline:2px solid var(--accent);outline-offset:-2px}
+.missing {color:var(--muted);font-weight:400}
+.full td {background:var(--surface);min-width:160px;max-width:540px;white-space:pre-line;font-size:13px}
+.full :is(td,th):first-child {min-width:195px;max-width:210px;box-shadow:1px 0 var(--border)}
+.full th {min-width:160px}
+.full .long-field {min-width:370px}
+.full .current-month {color:var(--accent)}
+.empty {text-align:center;border:1px solid var(--border);border-radius:9px;background:var(--surface);padding:36px 16px}
+.empty p {color:var(--muted);margin:6px 0 14px}
+.secondary-button,.icon-button {border:1px solid var(--border);border-radius:7px;background:var(--surface);padding:6px 10px}
+.table-note,footer {color:var(--muted);font-size:12px}
+.table-note {margin-top:9px}
+footer {margin-top:22px;border-top:1px solid var(--border);padding:13px 0 22px}
+.sr-only {position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+dialog {width:min(800px,calc(100vw - 24px));max-height:90vh;background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:14px;padding:0;box-shadow:var(--shadow)}
+dialog::backdrop {background:rgb(20 22 17 / .45)}
+body:has(dialog[open]) {overflow:hidden}
+.dialog-top {position:sticky;top:0;background:var(--surface);padding:17px 22px;border-bottom:1px solid var(--border);z-index:2}
+.overline {font-size:12px;color:var(--muted)}
+.dialog-top h2 {font-size:30px;letter-spacing:-.04em;line-height:1.1;margin-top:3px}
+.icon-button {display:grid;place-items:center;padding:7px}
+.detail-content {padding:18px 22px 22px}
+.detail-content h3 {font-size:16px;margin:20px 0 8px}
+.detail-content h3:first-child {margin-top:0}
+.goal-line {display:flex;align-items:center;gap:9px;color:var(--muted);font-size:13px}
+.hypotheses {margin:0;padding-left:20px}
+.hypotheses li+li {margin-top:4px}
+.source-note {white-space:pre-line;overflow-wrap:anywhere}
+.facts {display:grid;grid-template-columns:repeat(3,1fr);gap:11px 17px;margin:0}
+dt,.detail-content th {font-weight:500;color:var(--muted);font-size:12px}
+dd {margin:1px 0 0;white-space:pre-line}
+.detail-scroll {overflow-x:auto}
+.detail-content table {width:100%;font-size:13px;text-align:right}
+.detail-content table th,.detail-content table td {padding:7px;border-bottom:1px solid var(--border)}
+.detail-content table th:first-child {text-align:left}
+.detail-content thead th {position:static}
+.detail-note {margin:8px 0 0;color:var(--muted);font-size:12px}
+.retro-notes {margin:0;display:grid;gap:11px}
+.retro-notes dd {overflow-wrap:anywhere}
+@media(max-width:950px) {
+  .wrap {padding-inline:20px}
+  .metric {padding:14px}
+  .filters {gap:8px}
+  .field {font-size:11px}
+}
+@media(max-width:750px) {
+  .hero {align-items:flex-start;flex-wrap:wrap;padding:22px 0 16px;gap:14px}
+  .month-control {display:flex;align-items:center;gap:9px}
+  .filters {grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .field {font-size:12px}
+  #reasons-field {grid-column:1/-1}
+  #cohort-field .popover {left:auto;right:0}
+  .metrics {gap:6px}
+  .metric {padding:12px 10px;gap:7px}
+  .metric-label {font-size:12px;line-height:1.3}
+  .metric-label .icon,.target-bar {display:none}
+  .metric-value small {font-size:11px}
+  .metric-note {font-size:11px}
+  .target-line {display:block}
+  .sort-control>span:first-child {display:none}
+  .compact .col-name {width:155px}
+  .compact .col-name,.compact td:first-child {box-shadow:1px 0 var(--border)}
+  .facts {grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:490px) {
+  .wrap {padding-inline:13px}
+  .mast-inner {min-height:48px}
+  .identity-section,.identity-divider {display:none}
+  .date-range {font-size:11px;gap:5px}
+  .hero p {font-size:13px}
+  .metric-value {font-size:28px}
+  .metric-label {min-height:31px}
+  .metric {border-radius:8px;align-content:start}
+  .metrics {margin-bottom:12px}
+  .filter-panel {padding:12px}
+  .results {margin-top:19px}
+  .table-title-row,.table-actions {flex-wrap:wrap;gap:8px}
+  .table-title h2 {font-size:25px}
+  .view-control button {font-size:12px;padding:4px 6px}
+  .searchbox {width:100%}
+  .sort-control {width:100%;justify-content:space-between}
+  .sort-control>span:first-child {display:block}
+  .facts {grid-template-columns:1fr 1fr}
+  .dialog-top,.detail-content {padding:14px}
+  th,td {padding-inline:10px}
+}
+
+.sync-tools {display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-bottom:15px;color:var(--muted);font-size:13px}
+[hidden] {display:none !important}
+#sheet-link {text-decoration:none}
+</style>
+</head>
+<body>
+<svg class="symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 10h18"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24"><path d="M3 7h6m5 0h7M3 17h10m5 0h3"/><circle cx="11.5" cy="7" r="2.5"/><circle cx="15.5" cy="17" r="2.5"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 7M4 4v6h6"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+  <symbol id="i-store" viewBox="0 0 24 24"><path d="M4 10v10h16V10M3 10l2-6h14l2 6M3 10c0 3 4.5 3 4.5 0 0 3 4.5 3 4.5 0 0 3 4.5 3 4.5 0 0 3 4.5 3 4.5 0M9 20v-5h6v5"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20h17M7 16v-4m5 4V7m5 9V3"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
+</svg>
+<header class="masthead"><div class="wrap mast-inner">
+  <div class="identity"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="13" width="4" height="8" rx="1.2"/><rect x="10" y="8" width="4" height="13" rx="1.2"/><rect x="17" y="3" width="4" height="18" rx="1.2"/></svg></span><strong>Додо Пицца</strong><span class="identity-divider"></span><span class="identity-section">Аналитика сети</span></div>
+  <div class="date-range" aria-label="Период отчёта"><svg class="icon"><use href="#i-calendar"/></svg><span>01.11.2025 — 31.10.2026</span></div>
+</div></header>
+<main class="wrap">
+  <section class="hero" aria-labelledby="page-title">
+    <div><h1 id="page-title">Ретро открытий пиццерий</h1><p>Выручка новых пиццерий и причины отклонений от цели.</p></div>
+    <div class="month-control" id="month-control" hidden><span id="month-label">Месяц работы</span><div id="months" class="segment" role="group" aria-labelledby="month-label"></div></div>
+  </section>
+  <div class="sync-tools"><span id="sync-status" role="status">Для доступа к отчёту откройте исходную таблицу и выберите «Ретро → Открыть лендинг».</span><a id="sheet-link" class="secondary-button" href="https://docs.google.com/spreadsheets/d/1XT382mmH0xkTwaAqO0on7GSnPfrHFnE443TFUKiCGLY/edit" target="_blank" rel="noopener noreferrer">Открыть таблицу</a><button hidden id="refresh-data" class="secondary-button">Обновить данные</button></div>
+  <div id="live-data" hidden>
+  <section class="metrics" aria-label="Показатели по текущей выборке">
+    <article class="metric"><div class="metric-label"><svg class="icon"><use href="#i-store"/></svg>Пиццерий в выборке</div><div class="metric-value" id="metric-count">—</div><div class="metric-note" id="count-note"></div></article>
+    <article class="metric revenue-metric"><div class="metric-label"><svg class="icon"><use href="#i-chart"/></svg>Медианная выручка</div><div class="metric-value"><span id="metric-median">—</span> <small id="median-unit">млн ₽</small></div><div class="metric-note" id="median-note"></div></article>
+    <article class="metric"><div class="metric-label"><svg class="icon"><use href="#i-target"/></svg>Достигли целевой выручки</div><div class="metric-value"><span id="metric-yes">—</span> <small id="target-total"></small></div><div class="metric-note target-line"><span id="target-note"></span><span class="target-bar" aria-hidden="true"><i id="target-fill"></i></span></div></article>
+  </section>
+  <section class="filter-panel" aria-labelledby="filters-heading">
+    <div class="filter-heading"><h2 id="filters-heading"><svg class="icon"><use href="#i-filter"/></svg>Фильтры</h2><button id="reset" class="text-button"><svg class="icon"><use href="#i-reset"/></svg>Сбросить</button></div>
+    <div class="filters">
+      <div class="field multi-field" id="partner-field"></div>
+      <div class="field multi-field" id="cohort-field"></div>
+      <div class="field multi-field" id="region-field"></div>
+      <label class="field" for="target">Достигли целевой выручки?<span class="select-wrap"><select id="target"></select></span></label>
+      <div class="field multi-field" id="reasons-field"></div>
+    </div>
+    <div id="active-filters" aria-label="Выбранные значения" hidden></div>
+  </section>
+  <section class="results" aria-labelledby="results-heading">
+    <div class="table-title-row"><div class="table-title"><h2 id="results-heading">Сводная таблица</h2><span id="result-count" class="result-count" aria-live="polite"></span></div>
+      <div class="view-control segment" role="group" aria-label="Поля сводной таблицы"><button id="compact-view" aria-pressed="true">Основные</button><button id="full-view" aria-pressed="false">Все 40 полей</button></div>
+    </div>
+    <div class="table-actions">
+      <label class="searchbox"><svg class="icon"><use href="#i-search"/></svg><input type="search" id="search" aria-label="Поиск по названию пиццерии" placeholder="Найти пиццерию"></label>
+      <label class="sort-control" for="sort"><span>Сортировка</span><span class="select-wrap"><select id="sort"><option value="rev-asc">Сначала меньшая выручка</option><option value="rev-desc">Сначала большая выручка</option><option value="name-asc">Название от А до Я</option><option value="name-desc">Название от Я до А</option></select></span></label>
+    </div>
+    <div id="table-frame" class="table-frame" role="region" aria-label="Данные пиццерий, прокручиваемая таблица" tabindex="0"><table id="pizzerias"><caption class="sr-only">Пиццерии по выбранным фильтрам</caption><thead id="head"></thead><tbody id="list"></tbody></table></div>
+    <div class="empty" id="empty" hidden><strong>Пиццерии не найдены</strong><p>Измените условия поиска или сбросьте фильтры.</p><button class="secondary-button" id="reset-empty">Сбросить фильтры</button></div>
+    <p class="table-note">Нажмите на название пиццерии, чтобы посмотреть все показатели, или на ячейку «Гипотеза», чтобы открыть причины и план действий.</p>
+  </section>
+  </div>
+  <footer>Источник данных · «Ретро. Открытия 01.11.2025 – 31.10.2026», вкладка «Сводная»</footer>
+</main>
+<dialog id="detail" aria-labelledby="detail-kind detail-name"><div class="dialog-top"><div><span class="overline" id="detail-kind">Карточка пиццерии</span><h2 id="detail-name"></h2></div><button id="close-detail" class="icon-button" aria-label="Закрыть карточку" autofocus><svg class="icon"><use href="#i-close"/></svg></button></div><div class="detail-content" id="detail-content"></div></dialog>
+<script id="source-data" type="application/json">{"headers": {"A": "Пиццерия", "B": "Регион", "C": "Партнер", "D": "Город", "E": "Население", "F": "Кагорта по населению", "G": "Тип (обязательная/уплотнение)", "H": "Открыта доставка", "I": "Открыт ресторан", "J": "Финансовая группа пиццерии", "K": "Модельная выручка (по финансовой модели)", "L": "Модельная выручка ресторана (по финансовой модели)", "M": "Модельная выручка доставки (по финансовой модели)", "N": "Плановая выручка (что планировали с партнером)", "O": "Плановая выручка ресторана (что планировали с партнером)", "P": "Плановая выручка доставки (что планировали с партнером)", "Q": "Выручка 3-й месяц", "R": "Выручка 3-й месяц (ресторан)", "S": "Выручка 3-й месяц (доставка)", "T": "Упущенная выручка от стопов пиццерий и секторов (3-й месяц)", "U": "Упущенная выручка от стопов продуктов (3-й месяц)", "V": "Выручка 6-й месяц", "W": "Выручка 6-й месяц (ресторан)", "X": "Выручка 6-й месяц (доставка)", "Y": "Упущенная выручка от стопов пиццерий и секторов (6-й месяц)", "Z": "Упущенная выручка от стопов продуктов (6-й месяц)", "AA": "Выручка 9-й месяц", "AB": "Выручка 9-й месяц (ресторан)", "AC": "Выручка 9-й месяц (доставка)", "AD": "Упущенная выручка от стопов пиццерий и секторов (9-й месяц)", "AE": "Упущенная выручка от стопов продуктов (9-й месяц)", "AF": "Выручка 12-й месяц", "AG": "Выручка 12-й месяц (ресторан)", "AH": "Выручка 12-й месяц (доставка)", "AI": "Упущенная выручка от стопов пиццерий и секторов (12-й месяц)", "AJ": "Упущенная выручка от стопов продуктов (12-й месяц)", "AK": "Достигли целевой выручки?", "AL": "Гипотеза", "AM": "Если не достигли целевой выручки, то почему?", "AN": "Что будем делать для роста выручки?"}, "rows": []}</script>
+<script>const periods = {
+  3: ['Q','R','S','T','U'],
+  6: ['V','W','X','Y','Z'],
+  9: ['AA','AB','AC','AD','AE'],
+  12: ['AF','AG','AH','AI','AJ']
+};
+const collator = new Intl.Collator('ru', {numeric:true, sensitivity:'base'});
+const nf = new Intl.NumberFormat('ru-RU', {maximumFractionDigits:10});
+const shortNumber = new Intl.NumberFormat('ru-RU', {maximumFractionDigits:2});
+const percent = new Intl.NumberFormat('ru-RU', {style:'percent', maximumFractionDigits:1});
+const blank = '__blank__';
+const clean = v => String(v ?? '').trim().replace(/\s+/g, ' ');
+const lower = v => clean(v).toLocaleLowerCase('ru').replace(/ё/g,'е');
+const parts = v => [...new Set(String(v ?? '').split(',').map(clean).filter(Boolean))];
+const amount = (row, month) => {
+  const value = row[periods[month][0]];
+  return Number.isFinite(value) ? value : null;
+};
+function formatCell(row, col) {
+  const value = row[col];
+  if (value == null || value === '') return '—';
+  if (['H','I'].includes(col) && /^\d{4}-\d\d-\d\d$/.test(value)) {
+    return value.split('-').reverse().join('.');
+  }
+  return typeof value === 'number' ? nf.format(value) : String(value);
+}
+function matches(row, state) {
+  if (state.partner.size && !parts(row.C).some(person => state.partner.has(person))) return false;
+  if (state.region.size && !state.region.has(clean(row.B))) return false;
+  if (state.cohort.size && !state.cohort.has(clean(row.F))) return false;
+  if (state.target && (clean(row.AK) || blank) !== state.target) return false;
+  if (state.search && !lower(row.A).includes(lower(state.search))) return false;
+  if (state.reasons.size) {
+    const reasons = parts(row.AL);
+    return reasons.length ? reasons.some(reason => state.reasons.has(reason)) : state.reasons.has(blank);
+  }
+  return true;
+}
+function compareRows(a,b,sort,month) {
+  const ascending = sort.endsWith('asc');
+  const byName = collator.compare(a.A,b.A);
+  if (sort.startsWith('name')) return ascending ? byName : -byName;
+  const left = amount(a,month), right = amount(b,month);
+  if (left === null || right === null) {
+    if (left === right) return byName;
+    return left === null ? 1 : -1;
+  }
+  return (ascending ? left-right : right-left) || byName;
+}
+function summarize(rows,month) {
+  const values = rows.map(row => amount(row,month)).filter(x => x !== null).sort((a,b)=>a-b);
+  const n = values.length;
+  const median = n ? (values[Math.floor((n-1)/2)] + values[Math.floor(n/2)])/2 : null;
+  const yes = rows.filter(row => row.AK === 'Да').length;
+  const no = rows.filter(row => row.AK === 'Нет').length;
+  return {median, count:n, max:values[n-1], yes, evaluated:yes+no, regions:new Set(rows.map(row=>row.B)).size};
+}
+function plural(n,one,few,many) {
+  if (n%100 >= 11 && n%100 <= 14) return many;
+  if (n%10 === 1) return one;
+  return n%10 >= 2 && n%10 <= 4 ? few : many;
+}
+
+let {headers,rows} = JSON.parse(document.getElementById('source-data').textContent);
+const columns = Object.keys(headers);
+let rowIndex = new Map(rows.map((row,i) => [row,i]));
+const state = {partner:new Set(),cohort:new Set(),region:new Set(),target:'',search:'',reasons:new Set(),month:3,sort:'rev-asc',full:false};
+const $ = id => document.getElementById(id);
+const esc = v => String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const icon = name => `<svg class="icon" aria-hidden="true"><use href="#i-${name}"/></svg>`;
+const unique = values => [...new Set(values.filter(Boolean))].sort(collator.compare);
+const optionName = value => value === blank ? 'Не указана' : value;
+function cohortLowerBound(label) {
+  return label.startsWith('до') ? 0 : (parseInt(label) || Infinity);
+}
+const filterGroups = {
+  partner:{label:'Партнёр',all:'Все партнёры',options:()=>unique(rows.flatMap(row=>parts(row.C)))},
+  cohort:{label:'Когорта по населению',all:'Все когорты',options:()=>unique(rows.map(row=>clean(row.F))).sort((a,b)=>cohortLowerBound(a)-cohortLowerBound(b))},
+  region:{label:'Регион',all:'Все регионы',options:()=>unique(rows.map(row=>clean(row.B)))},
+  reasons:{label:'Гипотеза',all:'Все гипотезы',options:()=>[...unique(rows.flatMap(row=>parts(row.AL))),blank]}
+};
+for (const [value,label] of [['','Все статусы'],['Да','Да'],['Нет','Нет'],[blank,'Нет оценки']]) {
+  $('target').add(new Option(label,value));
+}
+$('target').addEventListener('change',()=>{state.target=$('target').value;render();});
+$('months').innerHTML = Object.keys(periods).map(m=>`<button data-month="${m}" aria-label="${m}-й месяц">${m}-й</button>`).join('');
+$('months').addEventListener('click',event=>{
+  const button=event.target.closest('button[data-month]');
+  if (button) {state.month=Number(button.dataset.month); render();}
+});
+let openGroup=null;
+function closeGroup(restoreFocus=false) {
+  if (!openGroup) return;
+  const key=openGroup;
+  openGroup=null;
+  $(key+'-menu').hidden=true;
+  $(key+'-button').setAttribute('aria-expanded','false');
+  if (restoreFocus) $(key+'-button').focus();
+}
+function searchPartners() {
+  const query=lower($('partner-search').value);
+  const labels=$('partner-options').querySelectorAll('label');
+  let count=0;
+  for(const label of labels) {
+    label.hidden=!lower(label.textContent).includes(query);
+    if(!label.hidden) count++;
+  }
+  $('partner-no-match').hidden=count!==0;
+}
+function groupItems(key) {
+  const options=new Set([...filterGroups[key].options(),...state[key]]);
+  return Array.from(options,value=>`<label><input type="checkbox" value="${esc(value)}"><span>${esc(optionName(value))}</span></label>`).join('');
+}
+function initGroup(key,{label,all}) {
+  const items=groupItems(key);
+  const search=key==='partner' ? '<input type="search" id="partner-search" class="option-search" placeholder="Найти партнёра" aria-label="Найти партнёра">' : '';
+  const hint=key==='reasons' ? '<p>Хотя бы одна из выбранных причин</p>' : '';
+  $(key+'-field').innerHTML=`<span id="${key}-label">${label}</span>
+    <button id="${key}-button" class="multi-trigger" aria-expanded="false" aria-controls="${key}-menu" aria-labelledby="${key}-label ${key}-text"><span id="${key}-text">${all}</span>${icon('down')}</button>
+    <div id="${key}-menu" class="popover" hidden role="group" aria-labelledby="${key}-label">${search}${hint}
+      <div class="options-list" id="${key}-options">${items}</div>${key==='partner'?'<p id="partner-no-match" hidden>Совпадений нет</p>':''}
+      <button class="text-button" id="clear-${key}">Снять выбор</button></div>`;
+  $(key+'-button').addEventListener('click',()=>{
+    const wasOpen=openGroup===key;
+    closeGroup();
+    if (wasOpen) return;
+    openGroup=key;
+    $(key+'-button').setAttribute('aria-expanded','true');
+    $(key+'-menu').hidden=false;
+    if (key==='partner') {
+      $('partner-search').value='';searchPartners();$('partner-search').focus();
+    }
+  });
+  $(key+'-options').addEventListener('change',event=>{
+    const {value,checked}=event.target;
+    if (checked) state[key].add(value);
+    else state[key].delete(value);
+    render();
+  });
+  $('clear-'+key).addEventListener('click',()=>{state[key].clear();closeGroup(true);render();});
+}
+for (const [key,group] of Object.entries(filterGroups)) initGroup(key,group);
+$('partner-search').addEventListener('input',searchPartners);
+function closeOutside(event) {
+  if (openGroup && !$(openGroup+'-field').contains(event.target)) closeGroup();
+}
+document.addEventListener('click',closeOutside);
+document.addEventListener('focusin',closeOutside);
+document.addEventListener('keydown',event=>{
+  if (event.key==='Escape' && openGroup) {event.preventDefault();closeGroup(true);}
+});
+$('active-filters').addEventListener('click',event=>{
+  const btn=event.target.closest('button');
+  if (!btn) return;
+  const {key,value}=btn.dataset;
+  state[key].delete(value);render();$(key+'-button').focus();
+});
+$('search').addEventListener('input',()=>{state.search=$('search').value;render();});
+$('sort').addEventListener('change',()=>{state.sort=$('sort').value;render();});
+function resetFilters() {
+  for (const key of Object.keys(filterGroups)) state[key].clear();
+  for (const id of ['target','search']) {state[id]='';$(id).value='';}
+  closeGroup();render();
+}
+$('reset').addEventListener('click',resetFilters);
+$('reset-empty').addEventListener('click',()=>{resetFilters();$('search').focus();});
+function setView(full) {
+  state.full=full;
+  $('table-frame').scrollLeft=0;
+  render();
+}
+$('compact-view').addEventListener('click',()=>setView(false));
+$('full-view').addEventListener('click',()=>setView(true));
+
+function badge(row) {
+  if (row.AK==='Да') return '<span class="status yes">Достигли</span>';
+  if (row.AK==='Нет') return '<span class="status no">Не достигли</span>';
+  return '<span class="status">Нет оценки</span>';
+}
+function nameButton(row) {
+  return `<button class="name-button" data-row="${rowIndex.get(row)}" aria-haspopup="dialog">${esc(row.A)}${icon('right')}</button>`;
+}
+function valueCell(row,col) {
+  const value=formatCell(row,col);
+  return value==='—' ? '<span class="missing">—</span>' : esc(value);
+}
+function sortable(label,key,css='',rowSpan=1) {
+  const isCurrent=state.sort.startsWith(key);
+  const asc=state.sort.endsWith('asc');
+  const sort=isCurrent ? ` aria-sort="${asc?'ascending':'descending'}"` : '';
+  const mark=isCurrent ? `<span class="sort-mark" aria-hidden="true">${asc?'↑':'↓'}</span>` : '';
+  return `<th scope="col" rowspan="${rowSpan}" class="${css}"${sort}><button class="bar-head" data-sort="${key}">${esc(label)}${mark}</button></th>`;
+}
+function renderHeadings() {
+  const revCol=periods[state.month][0];
+  if (!state.full) {
+    return '<tr>'+sortable('Пиццерия','name','col-name',2)
+      +`<th scope="colgroup" colspan="3" class="rev-band">Выручка за ${state.month}-й месяц, ₽</th>`
+      +'<th scope="col" rowspan="2" class="col-target">Целевая выручка</th><th scope="col" rowspan="2" class="col-partner">Партнёр</th><th scope="col" rowspan="2" class="col-reasons">Гипотеза</th></tr>'
+      +'<tr>'+sortable('Общая','rev','right')+'<th scope="col" class="right">Доставка</th><th scope="col" class="right">Ресторан</th></tr>';
+  }
+  return '<tr>'+columns.map(col=>{
+    if (col==='A') return sortable(headers[col],'name');
+    if (col===revCol) return sortable(headers[col]+', ₽','rev','current-month');
+    const heading=columns.indexOf(col)>=10 && columns.indexOf(col)<36 ? headers[col]+', ₽' : headers[col];
+    return `<th scope="col" class="${['AM','AN'].includes(col)?'long-field':''}">${esc(heading)}</th>`;
+  }).join('')+'</tr>';
+}
+function revenueCell(row,actualCol,planCol,max) {
+  const value=row[actualCol];
+  const actual=Number.isFinite(value) ? nf.format(value) : '—';
+  const bar=Number.isFinite(value) && max>0 ? `<div class="money-track" aria-hidden="true"><i style="width:${100*value/max}%"></i></div>` : '';
+  const plan=formatCell(row,planCol);
+  return `<td class="money"><span class="actual${actual==='—'?' missing':''}">${actual}</span>${bar}<span class="sub plan" title="${esc(headers[planCol])}">План ${esc(plan)}${plan==='—'?'':' ₽'}</span></td>`;
+}
+function hypothesisCell(row,full=false) {
+  const reasons=parts(row.AL);
+  const text=full ? valueCell(row,'AL') : esc(reasons[0]??'Не указана');
+  const count=!full && reasons.length>1 ? `<span class="sub">Ещё ${reasons.length-1}</span>` : '';
+  return `<td class="reason-cell" data-hypotheses="${rowIndex.get(row)}"><button type="button" class="reason-button" aria-haspopup="dialog" aria-label="Открыть гипотезы и план действий — ${esc(row.A)}"><span>${text}${count}</span>${icon('right')}</button></td>`;
+}
+function compactRow(row,max) {
+  const [total,restaurant,delivery]=periods[state.month];
+  const money=revenueCell(row,total,'N',max)+revenueCell(row,delivery,'P',max)+revenueCell(row,restaurant,'O',max);
+  return `<tr><td>${nameButton(row)}<span class="sub">${esc(row.B)}</span></td>${money}<td>${badge(row)}</td><td class="partner-cell">${esc(clean(row.C))}</td>${hypothesisCell(row)}</tr>`;
+}
+function fullRow(row) {
+  return '<tr>'+columns.map((col,i)=>{
+    if (col==='AL') return hypothesisCell(row,true);
+    const classes=i>=10 && i<36 ? 'right' : i>=38 ? 'long-field' : '';
+    return `<td class="${classes}">${col==='A'?nameButton(row):valueCell(row,col)}</td>`;
+  }).join('')+'</tr>';
+}
+$('head').addEventListener('click',event=>{
+  const key=event.target.closest('[data-sort]')?.dataset.sort;
+  if (!key) return;
+  state.sort=key+(state.sort===key+'-asc'?'-desc':'-asc');
+  render();
+  $('head').querySelector(`[data-sort="${key}"]`)?.focus({preventScroll:true});
+});
+function render() {
+  const filtered=rows.filter(row=>matches(row,state)).sort((a,b)=>compareRows(a,b,state.sort,state.month));
+  const metrics=summarize(filtered,state.month);
+  $('metric-count').textContent=nf.format(filtered.length);
+  $('count-note').textContent=`из ${rows.length} · ${metrics.regions} ${plural(metrics.regions,'регион','региона','регионов')}`;
+  $('metric-median').textContent=metrics.median===null ? '—' : shortNumber.format(metrics.median/1e6);
+  $('metric-median').title=metrics.median===null?'':nf.format(metrics.median)+' ₽';
+  $('median-unit').hidden=metrics.median===null;
+  $('median-note').textContent=`${state.month}-й месяц · с данными ${metrics.count} из ${filtered.length}`;
+  $('metric-yes').textContent=nf.format(metrics.yes);
+  $('target-total').textContent='из '+metrics.evaluated+' с оценкой';
+  $('target-note').textContent=metrics.evaluated ? `${percent.format(metrics.yes/metrics.evaluated)} среди оценённых` : 'Нет оценок в выборке';
+  $('target-fill').style.width=(metrics.evaluated ? 100*metrics.yes/metrics.evaluated : 0)+'%';
+  $('result-count').textContent=filtered.length===rows.length ? String(filtered.length) : `${filtered.length} из ${rows.length}`;
+  const chips=[];
+  for (const [key,group] of Object.entries(filterGroups)) {
+    const selected=state[key];
+    const first=selected.values().next().value;
+    $(key+'-text').textContent=selected.size>1 ? `Выбрано: ${selected.size}` : selected.size ? optionName(first) : group.all;
+    $(key+'-options').querySelectorAll('input').forEach(input=>{input.checked=selected.has(input.value);});
+    $('clear-'+key).disabled=!selected.size;
+    for (const value of selected) {
+      const name=esc(optionName(value));
+      chips.push(`<button class="active-chip" data-key="${key}" data-value="${esc(value)}" aria-label="Снять фильтр ${group.label} — ${name}">${name}${icon('close')}</button>`);
+    }
+  }
+  $('reset').disabled=!state.target && !state.search && !chips.length;
+  $('active-filters').hidden=!chips.length;
+  $('active-filters').innerHTML=chips.join('');
+  $('months').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.month)===state.month)));
+  $('compact-view').setAttribute('aria-pressed',String(!state.full));
+  $('full-view').setAttribute('aria-pressed',String(state.full));
+  $('sort').value=state.sort;
+  $('pizzerias').className=state.full?'full':'compact';
+  $('head').innerHTML=renderHeadings();
+  $('list').innerHTML=filtered.map(row=>state.full?fullRow(row):compactRow(row,metrics.max)).join('');
+  $('empty').hidden=filtered.length!==0;
+  $('table-frame').hidden=!filtered.length;
+  $('table-frame').scrollTop=0;
+}
+
+function dataTable(labels,entries) {
+  return `<div class="detail-scroll"><table><thead><tr>${labels.map(label=>`<th scope="col">${esc(label)}</th>`).join('')}</tr></thead><tbody>${entries.map(([title,...values])=>`<tr><th scope="row">${esc(title)}</th>${values.map(v=>`<td>${v}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
+function openDetail(row,kind,content) {
+  $('detail-kind').textContent=kind;
+  $('detail-name').textContent=row.A;
+  $('detail-content').innerHTML=content;
+  $('detail').showModal();
+  $('detail').scrollTop=0;
+}
+function showHypotheses(row) {
+  const reasons=parts(row.AL);
+  const list=reasons.length ? `<ul class="hypotheses">${reasons.map(reason=>`<li>${esc(reason)}</li>`).join('')}</ul>` : '<p class="missing">Гипотезы не указаны.</p>';
+  const notes=['AM','AN'].map(col=>`<h3>${esc(headers[col])}</h3><p class="source-note">${row[col] ? esc(row[col]) : '<span class="missing">Нет записи в сводной.</span>'}</p>`).join('');
+  openDetail(row,'Разбор открытия',`<p class="goal-line">Целевая выручка ${badge(row)}</p><h3>Гипотезы</h3>${list}${notes}`);
+}
+function showDetail(row) {
+  const facts=['B','C','D','E','F','G','H','I','J'];
+  const catalog=facts.map(c=>`<div><dt>${esc(c==='F'?'Когорта по населению':headers[c])}</dt><dd>${valueCell(row,c)}</dd></div>`).join('');
+  const planned=dataTable(['Показатель','Всего','Ресторан','Доставка'],[
+    ['По финансовой модели',...['K','L','M'].map(c=>valueCell(row,c))],
+    ['План с партнёром',...['N','O','P'].map(c=>valueCell(row,c))]
+  ]);
+  const actual=dataTable(['Месяц','Выручка','Ресторан','Доставка','Стопы пиццерий и секторов','Стопы продуктов'],
+    Object.entries(periods).map(([month,cols])=>[month+'-й',...cols.map(c=>valueCell(row,c))]));
+  const notes=['AK','AL','AM','AN'].map(c=>`<div><dt>${esc(headers[c])}</dt><dd>${c==='AK'?badge(row):valueCell(row,c)}</dd></div>`).join('');
+  openDetail(row,'Карточка пиццерии',`<h3>О пиццерии</h3><dl class="facts">${catalog}</dl><h3>Модельная и плановая выручка, ₽</h3>${planned}<h3>Выручка по месяцам работы, ₽</h3>${actual}<p class="detail-note">В столбцах со стопами указана упущенная выручка.</p><h3>Итоги открытия</h3><dl class="retro-notes">${notes}</dl>`);
+}
+$('list').addEventListener('click',event=>{
+  const cell=event.target.closest('td[data-hypotheses]');
+  if (cell) {
+    showHypotheses(rows[Number(cell.dataset.hypotheses)]);
+    return;
+  }
+  const button=event.target.closest('button[data-row]');
+  if (button) showDetail(rows[Number(button.dataset.row)]);
+});
+$('close-detail').addEventListener('click',()=>$('detail').close());
+$('detail').addEventListener('click',event=>{
+  if(event.target!==$('detail')) return;
+  const box=$('detail').getBoundingClientRect();
+  if(event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom) $('detail').close();
+});
+render();
+
+function decodeSummary(values) {
+  if (!Array.isArray(values) || !Array.isArray(values[0])) throw new Error('Нет заголовков на вкладке «Сводная».');
+  const headerKey=value=>lower(value).replace('кагорта','когорта');
+  const labels=values[0].map(headerKey);
+  const positions=columns.map(col=>{
+    const name=headerKey(headers[col]), index=labels.indexOf(name);
+    if(index===-1 || labels.lastIndexOf(name)!==index) throw new Error('Проверьте заголовок в «Сводной» — '+headers[col]+'.');
+    return index;
+  });
+  const records=[];
+  for(const source of values.slice(1)) {
+    if(!clean(source[positions[0]])) continue;
+    const row={};
+    columns.forEach((col,i)=>{
+      let value=source[positions[i]];
+      if(value==='' || value==null) return;
+      if ((i===4 || i>=10 && i<36) && typeof value==='string') {
+        const digits=value.replace(/\s/g,'').replace(',','.');
+        if(/^-?\d+(\.\d+)?$/.test(digits) && Number.isFinite(Number(digits))) value=Number(digits);
+      }
+      row[col]=value;
+    });
+    records.push(row);
+  }
+  return records;
+}
+const syncButton = $('refresh-data');
+const syncStatus = $('sync-status');
+let lastRead = '';
+
+function readSheet() {
+  return new Promise((resolve, reject) => {
+    const channel = new MessageChannel();
+    const timer = setTimeout(() => {
+      channel.port1.close();
+      reject(new Error('Google не ответил вовремя. Попробуйте ещё раз.'));
+    }, 60000);
+    channel.port1.onmessage = ({data}) => {
+      clearTimeout(timer);
+      channel.port1.close();
+      if (data?.result) resolve(data.result);
+      else reject(new Error(data?.error || 'Не удалось прочитать «Сводную».'));
+    };
+    // Only the read request crosses origins. The reply travels on its own port.
+    window.parent.postMessage('retro.readSummary', '*', [channel.port2]);
+  });
+}
+
+async function refreshData() {
+  if (syncButton.disabled) return;
+  syncButton.disabled = true;
+  syncStatus.textContent = 'Читаем вкладку «Сводная»…';
+  try {
+    const result = await readSheet();
+    const nextRows = decodeSummary(result.values);
+    const time = new Date(result.readAt).toLocaleString('ru-RU');
+    closeGroup();
+    if ($('detail').open) $('detail').close();
+    rows = nextRows;
+    rowIndex = new Map(rows.map((row, i) => [row, i]));
+    for (const key of Object.keys(filterGroups)) {
+      $(key + '-options').innerHTML = groupItems(key);
+    }
+    searchPartners();
+    render();
+    $('live-data').hidden = false;
+    $('month-control').hidden = false;
+    lastRead = time;
+    syncStatus.textContent = 'Обновлено ' + time;
+  } catch (error) {
+    syncStatus.textContent = error.message + (lastRead ? ' На экране данные на ' + lastRead + '.' : '');
+  } finally {
+    syncButton.disabled = false;
+  }
+}
+
+if (window.parent !== window && window.location.hash === '#sheet') {
+  $('sheet-link').hidden = true;
+  syncButton.hidden = false;
+  syncButton.addEventListener('click', refreshData);
+  refreshData();
+}
+</script>
+</body></html>
