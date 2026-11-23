@@ -692,6 +692,7 @@ const clientId = '288487946565-1d7abhf2n76jfg70ufrlp6cfavdp005t.apps.googleuserc
 const fileScope = 'https://www.googleapis.com/auth/drive.file';
 const callbackUrl = new URL('./', location.href).href;
 const stateKey = 'pizzeria-openings-retro:oauth-state';
+const sessionKey = 'pizzeria-openings-retro:google-session';
 const embedded = window.parent !== window && location.hash === '#sheet';
 let accessToken = '';
 let lastRead = '';
@@ -761,11 +762,38 @@ function startLogin(renew = false) {
   location.assign(url.href);
 }
 
+function clearGoogleSession() {
+  accessToken = '';
+  try { sessionStorage.removeItem(sessionKey); } catch { /* Storage may be disabled. */ }
+}
+
+function resumeGoogleSession() {
+  let saved;
+  try {
+    saved = JSON.parse(sessionStorage.getItem(sessionKey));
+  } catch {
+    clearGoogleSession();
+    return;
+  }
+  if (!saved) return;
+  if (typeof saved.token !== 'string' || !saved.token || !Number.isFinite(saved.expiresAt)) {
+    clearGoogleSession();
+    return;
+  }
+  if (saved.expiresAt <= Date.now()) {
+    clearGoogleSession();
+    startLogin(true);
+    return;
+  }
+  accessToken = saved.token;
+}
+
 function acceptLogin() {
   const fragment = new URLSearchParams(location.hash.slice(1));
   const query = new URLSearchParams(location.search);
-  if (!fragment.has('access_token') && !fragment.has('error') && !query.has('error') && !query.has('code')) return;
+  if (!fragment.has('access_token') && !fragment.has('error') && !query.has('error') && !query.has('code')) return false;
   history.replaceState(null, '', callbackUrl);
+  clearGoogleSession();
   const pending = JSON.parse(sessionStorage.getItem(stateKey) || 'null');
   sessionStorage.removeItem(stateKey);
   const returnedState = fragment.get('state') || query.get('state');
@@ -782,6 +810,14 @@ function acceptLogin() {
     throw new Error('Google не вернул доступ к выбранной таблице. Повторите вход.');
   }
   accessToken = fragment.get('access_token');
+  const expiresIn = Number(fragment.get('expires_in'));
+  const expiresAt = Date.now() + expiresIn * 1000;
+  if (expiresIn > 0 && Number.isSafeInteger(expiresAt)) {
+    try {
+      sessionStorage.setItem(sessionKey, JSON.stringify({token: accessToken, expiresAt}));
+    } catch { /* A valid token still works for this page when storage is full. */ }
+  }
+  return true;
 }
 
 async function readFromGoogle() {
@@ -793,7 +829,7 @@ async function readFromGoogle() {
     cache: 'no-store', credentials: 'omit', redirect: 'error', signal: AbortSignal.timeout(60000)
   });
   if ([401, 403, 404].includes(response.status)) {
-    accessToken = '';
+    clearGoogleSession();
     if (response.status === 401) throw Object.assign(new Error('Сеанс Google завершён. Войдите снова.'), {status: 401});
     throw new Error('Google не разрешил чтение «Сводной». Проверьте доступ выбранного аккаунта к исходной таблице.');
   }
@@ -837,7 +873,7 @@ function restoreView(view) {
   state.full = view.full === true;
 }
 
-async function refreshData(automatic = false) {
+async function refreshData(allowRenewal = false) {
   if (syncButton.disabled) return;
   clearTimeout(readTimer);
   nextReadAt = 0;
@@ -866,7 +902,7 @@ async function refreshData(automatic = false) {
     syncStatus.textContent = 'Обновлено ' + time + ' · Автообновление в 09:00 и 21:00 МСК';
   } catch (error) {
     if (!embedded && !accessToken) {
-      if (automatic && lastRead && error.status === 401) {
+      if (allowRenewal && error.status === 401) {
         try { startLogin(true); }
         catch { /* Show the sign-in screen if the renewal could not be started. */ }
       }
@@ -891,17 +927,21 @@ if (embedded) {
     try { startLogin(); }
     catch { syncStatus.textContent = 'Для входа разрешите хранение данных сайта в этой вкладке.'; }
   });
-  $('sign-out').addEventListener('click', () => location.replace(callbackUrl));
+  $('sign-out').addEventListener('click', () => {
+    clearGoogleSession();
+    location.replace(callbackUrl);
+  });
   window.addEventListener('pageshow', event => {
     if (event.persisted) location.reload();
   });
   try {
-    acceptLogin();
+    const isCallback = acceptLogin();
+    if (clientId && !isCallback) resumeGoogleSession();
     if (clientId && accessToken) {
       loginButton.hidden = true;
       syncButton.hidden = false;
       $('sign-out').hidden = false;
-      refreshData();
+      refreshData(!isCallback);
     }
   } catch (error) {
     syncStatus.textContent = error.message;
